@@ -21,8 +21,6 @@ app.use(express.static(publicFolder))
 
 // Starting Socket io connection
 io.on('connection', (socket) => {
-    console.log('New Websocket connection')
-
     socket.on('join', ( options, callback) => {
         const { error, user } = addUser({ id: socket.id, ...options })
         
@@ -30,6 +28,7 @@ io.on('connection', (socket) => {
             return callback(error)
         }
 
+        console.log(`New websocket connection from: ${user.username} at romm: ${user.room}`)
         socket.join(user.room)
 
         socket.emit('message', generateMessage('Admin','Welcome!'))
@@ -61,7 +60,7 @@ io.on('connection', (socket) => {
     })
 
     socket.on('disconnect', () => {
-        const user = removeUser(socket.id)
+        const user = getUser(socket.id)
 
         if(user) {
             io.to(user.room).emit('message', generateMessage('Admin', `${user.username} has left!`))
@@ -69,6 +68,8 @@ io.on('connection', (socket) => {
                 room: user.room,
                 users: getUsersInRoom(user.room)
             })
+        console.log(`${user.username} has left ${user.room}`)
+        removeUser(socket.id)
         }
 
     })
